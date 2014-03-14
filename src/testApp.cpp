@@ -3,18 +3,42 @@
 using namespace ofxCv;
 
 void testApp::setup() {
-
-    viewMode = 0;
-    
-	ofSetVerticalSync(true);
-	ofSetFrameRate(60);
+    ofSetVerticalSync(true);
+	ofSetFrameRate(30);
 	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
-	cam.initGrabber(640, 480);
+    ofBackground(0);
+    
+    // mindwave setup
+    
+    thinkGear.setup("/dev/tty.MindWaveMobile-DevA", 0);
+    ofAddListener(thinkGear.attentionChangeEvent, this, &testApp::attentionListener);
+    ofAddListener(thinkGear.meditationChangeEvent, this, &testApp::meditationListener);
+    
+    distAw = 0.0;
+    prevAw = 0.0;
+    currAw = 0.0;
+    distMw = 0.0;
+    prevMw = 0.0;
+    currMw = 0.0;
+    
+    atChangeTime = 0.0;
+    attention = 0.0;
+    meChangeTime = 0.0;
+    meditation = 0.0;
+    
+	// initialize camera
+	  cam.initGrabber(640, 480);
+//    camWidth = 640;
+//    camHeight = 480;
+//    cam.setVerbose(true);
+//    cam.initGrabber(camWidth, camHeight * 3);
+//    mirrorImage = new unsigned char(camWidth * camHeight * 3);
+//    mirror.allocate(camWidth, camHeight, GL_RGB);
     
 	tracker.setup();
 	tracker.setRescale(.5);
     
-	int num = 10000;
+	int num = 7000;
 	p.assign(num, demoParticle());
 	currentMode = PARTICLE_MODE_NEAREST_POINTS;
 	resetParticles();
@@ -23,34 +47,30 @@ void testApp::setup() {
 	centerOfRightEye.set(0,0,0);
 	centerOfLeftEye.set(0,0,0);
     centerOfJaw.set(0,0,0);
-    
-//--------
-    //serial setup
-    bSendSerialMessage = false;
-	ofSetLogLevel(OF_LOG_VERBOSE);
-    
-	serial.listDevices();
-	vector <ofSerialDeviceInfo> deviceList = serial.getDeviceList();
-	
-	// this should be set to whatever com port your serial device is connected to.
-	// (ie, COM4 on a pc, /dev/tty.... on linux, /dev/tty... on a mac)
-	// arduino users check in arduino app....
-	//serial.setup(5, 9600); //open the first device
-	//serial.setup("COM4"); // windows example
-	serial.setup("/dev/tty.usbmodemfd131",9600); // mac osx example
-	//serial.setup("/dev/ttyUSB0", 9600); //linux example
-	
-	nTimesRead = 0;
-	nBytesRead = 0;
-	readTime = 0;
-	memset(bytesReadString, 0, 4);
+
     
     transAtt = 0;
     transMed = 0;
 //-----------
+  
     
-    ofBackground(255);
     
+}
+
+void testApp::attentionListener(float &param)
+{
+    attention = param;
+    distAw = ofMap(attention, 0.0, 100.0, 0, ofGetWidth());
+    atChangeTime = ofGetElapsedTimef();
+    
+    //cout << atChangeTime << endl;
+}
+
+void testApp::meditationListener(float &param)
+{
+    meditation = param;
+    distMw = ofMap(meditation, 0.0, 100.0, 0, ofGetWidth());
+    meChangeTime = ofGetElapsedTimef();
 }
 
 void testApp::resetParticles(){
@@ -63,62 +83,16 @@ void testApp::resetParticles(){
     
 	attractPointsWithMovement = attractPoints;
     
-	for(int i = 0; i < p.size(); i++){
-		p[i].setMode(currentMode);
-		p[i].setAttractPoints(&attractPointsWithMovement);;
-		p[i].reset();
+	for(vector<demoParticle>::iterator it = p.begin(); it != p.end(); it++ ){
+		it -> setMode(currentMode);
+		it -> setAttractPoints(&attractPointsWithMovement);;
+		it -> reset();
     }
 }
 
 void testApp::update() {
-    int howMany = serial.available();
     
-    //cout << howMany << endl;
-    
-    if (howMany > 0){
-        
-        unsigned char bytes[howMany];
-        serial.readBytes(bytes, howMany);
-        //cout << "numBytes recvd: " << ofToString(howMany) << endl;
-        
-        for (int i = 0; i < howMany; i++){
-            message += (bytes[i]);
-        }
-        
-        //cout << message << endl;
-        int foundHash = 0;
-        foundHash = message.find("#");
-        
-        if (foundHash > 0){
-            cout << message << endl;
-            parsedMsg = ofSplitString(message, ",");
-            
-            sig = ofToFloat(parsedMsg[0]);
-            att = ofToFloat(parsedMsg[1]);
-            med = ofToFloat(parsedMsg[2]);
-            
-            cout << "sig: "<<sig<< "  att: "<< att << "  med: " << med << endl;
-            
-            //            cout << "Signal: " << parsedMsg[0] << endl;
-            //            cout << "Attention: " << parsedMsg[1] << endl;
-            //            cout << "Meditation: " << parsedMsg[2] << endl;
-            //            cout << "Delta: " << parsedMsg[3] << endl;
-            //            cout << "Theta: " << parsedMsg[4] << endl;
-            //            cout << "Low Alpha: " << parsedMsg[5] << endl;
-            //            cout << "High Alpha: " << parsedMsg[6] << endl;
-            //            cout << "Low Beta: " << parsedMsg[7] << endl;
-            //            cout << "High Beta: " << parsedMsg[8] << endl;
-            //            cout << "Low Gamma: " << parsedMsg[9] << endl;
-            //            cout << "High Gamma: " << parsedMsg[10] << endl;
-            //
-            //            cout << "---------" << endl;
-            message.clear();
-            
-        }
-        
-        howMany = 0;
-    }
-
+    thinkGear.update();
     
 	cam.update();
 	if(cam.isFrameNew()) {
@@ -128,102 +102,132 @@ void testApp::update() {
 		_text.readToPixels(pixels);
         
 	}
+
     
-    for(int i = 0; i < p.size(); i++){
-		p[i].setMode(currentMode);
-		p[i].update(centerOfFace, attractPoints, transAtt, transMed);
-		p[i].color.set( pixels.getColor(ofMap(p[i].pos.x, 0, ofGetWindowWidth(), 0, 640), ofMap(p[i].pos.y, 0, ofGetWindowHeight(), 0, 480) ));
-	}
+    for(vector<demoParticle>::iterator it=p.begin(); it!=p.end(); it++){
+        it -> setMode(currentMode);
+        it -> update(centerOfFace, attractPoints, transAtt, transMed);
+        it -> color.set( pixels.getColor( ofMap(it -> pos.x, 0, ofGetWindowWidth(), 0, 640), ofMap(it -> pos.y, 0, ofGetWindowHeight(), 0, 480) ));
+       
+    }
+
+//    cout << "attention: " << attention << endl;
+//    cout << "meditation: " << meditation << endl;
     
     // ATTENTION VALUES
-    if(att >= 0 && att <= 10){
-        transAtt = ofRandom(1,2.5);         //changes size of particles
+    if(attention >= 0 && attention <= 10){
+        transAtt = 4.2;         //changes size of particles
     }
-    if(att >=11 && att <= 20){
-        transAtt = ofRandom(0.6,0.8);  
+    if(attention >=11 && attention <= 20){
+        transAtt = 3.8;
     }
-    if(att >=21 && att <= 30){
-        transAtt = ofRandom(0.9,1);
+    if(attention >=21 && attention <= 30){
+        transAtt = 3.4;
     }
-    if(att >=31 && att <= 40){
-        transAtt = ofRandom(1,1.2);
+    if(attention >=31 && attention <= 40){
+        transAtt = 3.0;
     }
-    if(att >=41 && att <= 50){
-        transAtt = ofRandom(1.2,1.4);
+    if(attention >=41 && attention <= 50){
+        transAtt = 2.6;
     }
-    if(att >= 51 && att <= 60){
-        transAtt = ofRandom(1.4,1.6);
+    if(attention >= 51 && attention <= 60){
+        transAtt = 2.2;
     }
-    if(att >= 61 && att <=70){
-        transAtt = ofRandom(1.6,1.8);
+    if(attention >= 61 && attention <=70){
+        transAtt = 1.8;
     }
-    if(att >= 71 && att <=80){
-        transAtt = ofRandom(1.8,1.9);
+    if(attention >= 71 && attention <=80){
+        transAtt = 1.4;
     }
-    if(att >= 81 && att <= 90){
-        transAtt = ofRandom(1.9,2.0);
+    if(attention >= 81 && attention <= 90){
+        transAtt = 1.0;
     }
-    if(att >=91 && att <= 100){
-        transAtt = ofRandom(2.0,2.5);
+    if(attention >=91 && attention <= 100){
+        transAtt = 0.7;
     }
     
     // MEDITATION VALUES
-    if(med >= 0 && med <= 10){
-        transMed = ofRandom(0.90,0.98);         // changes drag value
+    if(meditation >= 0 && meditation <= 10){
+        transMed = ofRandom(0.90,0.98);         
         particles.frcVar = 5;
-        for(int i = 0; i < p.size(); i++){
-            p[i].chaos();
+        for(vector<demoParticle>::iterator it = p.begin(); it != p.end(); it++ ){
+
+            it -> chaos(4);
         }
     }
-    if(med >=11 && med <= 20){
+    if(meditation >=11 && meditation <= 20){
         transMed = ofRandom(0.91,0.98);
         particles.frcVar = 4;
-        for(int i = 0; i < p.size(); i++){
-            p[i].chaos();
+        for(vector<demoParticle>::iterator it = p.begin(); it != p.end(); it++ ){
+            
+            it -> chaos(3);
         }
     }
-    if(med >=21 && med <= 30){
+    if(meditation >=21 && meditation <= 30){
         transMed = ofRandom(0.92,0.98);
         particles.frcVar = 3;
-        for(int i = 0; i < p.size(); i++){
-            p[i].chaos();
+        for(vector<demoParticle>::iterator it = p.begin(); it != p.end(); it++ ){
+            
+            it -> chaos(2);
         }
     }
-    if(med >=31 && med <= 40){
+    if(meditation >=31 && meditation <= 40){
         transMed = ofRandom(0.93,0.98);
         particles.frcVar = 2;
-        for(int i = 0; i < p.size(); i++){
-            p[i].chaos();
+        for(vector<demoParticle>::iterator it = p.begin(); it != p.end(); it++ ){
+            
+            it -> chaos(1);
         }
     }
-    if(med >=41 && med <= 50){
+    if(meditation >=41 && meditation <= 50){
         transMed = ofRandom(0.94,0.98);
-        particles.frcVar = 1;
-        for(int i = 0; i < p.size(); i++){
-            p[i].chaos();
+        particles.frcVar = 1.7;
+        for(vector<demoParticle>::iterator it = p.begin(); it != p.end(); it++ ){
+            
+            it -> chaos(0.7);
         }
     }
-    if(med >= 51 && med <= 60){
+    if(meditation >= 51 && meditation <= 60){
         transMed = ofRandom(0.97,0.98);
-        particles.frcVar = 0.1;
-        for(int i = 0; i < p.size(); i++){
-            p[i].chaos();
+        particles.frcVar = 1.4;
+        for(vector<demoParticle>::iterator it = p.begin(); it != p.end(); it++ ){
+            
+            it -> chaos(0.4);
         }
-
     }
-    if(med >= 61 && med <=70){
-        transMed = ofRandom(0.96,0.98);
-    }
-    if(med >= 71 && med <=80){
+    if(meditation >= 61 && meditation <= 70){
         transMed = ofRandom(0.97,0.98);
+        particles.frcVar = 1.1;
+        for(vector<demoParticle>::iterator it = p.begin(); it != p.end(); it++ ){
+            
+            it -> chaos(0.15);
+        }
     }
-    if(med >= 81 && med <= 90){
-        transMed = ofRandom(0.975,0.98);
+    if(meditation >= 71 && meditation <= 80){
+        transMed = ofRandom(0.97,0.98);
+        particles.frcVar = 0.8;
+        for(vector<demoParticle>::iterator it = p.begin(); it != p.end(); it++ ){
+            
+            it -> chaos(0.08);
+        }
     }
-    if(med >=91 && med <= 100){
-        transMed = ofRandom(0.95,0.98);
+    if(meditation >= 81 && meditation <= 90){
+        transMed = ofRandom(0.97,0.98);
+        particles.frcVar = 0.7;
+        for(vector<demoParticle>::iterator it = p.begin(); it != p.end(); it++ ){
+            
+            it -> chaos(0.05);
+        }
     }
-
+    if(meditation >= 91 && meditation <= 100){
+        transMed = ofRandom(0.97,0.98);
+        particles.frcVar = 0.4;
+        for(vector<demoParticle>::iterator it = p.begin(); it != p.end(); it++ ){
+            
+            it -> chaos(0.02);
+        }
+    }
+    
 }
 void testApp::draw() {
 	ofSetColor(255);
@@ -255,25 +259,26 @@ void testApp::draw() {
         
     }
     
-    for(int i = 0; i < p.size(); i++){
-		p[i].draw();
-	}
+    for(vector<demoParticle>::iterator it=p.begin(); it!=p.end(); it++){
+        it -> draw();
+    }
     
-    ofSetColor(190);
-    //needed only for nearest point mode
-	if( currentMode == PARTICLE_MODE_NEAREST_POINTS ){
-		for(int i = 0; i < attractPoints.size(); i++){
-			ofNoFill();
-			ofCircle(attractPointsWithMovement[i], 10);
-			ofFill();
-			ofCircle(attractPointsWithMovement[i], 4);
-		}
-	}
+//    ofSetColor(190);
+//    //needed only for nearest point mode
+//	if( currentMode == PARTICLE_MODE_NEAREST_POINTS ){
+//        
+//		for(int i = 0; i < attractPoints.size(); i++){
+//			ofNoFill();
+//			ofCircle(attractPointsWithMovement[i], 10);
+//			ofFill();
+//			ofCircle(attractPointsWithMovement[i], 4);
+//		}
+//	}
     
 
     if(viewMode > 0){
         //draw fps
-        ofSetColor(255);
+        ofSetColor(200);
         ofDrawBitmapString("fps: "+ofToString(ofGetFrameRate()), 20, 20);
         
         //draw face tracking
@@ -292,15 +297,16 @@ void testApp::draw() {
     
     if(viewMode > 1){
         //draw meditation bar
-        ofSetColor(200, 100, 50, 20);
-        ofRect(ofGetWidth()-75, 0, 75, med*4);
+        ofSetColor(255, 50, 150);
+        ofRect(ofGetWidth()-35, 0, 35, meditation*5);
         
-        ofSetColor(50, 200, 100, 20);
-        ofRect(ofGetWidth()-150, 0, 75, att*4);
+        ofSetColor(50, 255, 150);
+        ofRect(ofGetWidth()-70, 0, 35, attention*5);
         
         ofSetColor(255);
-        ofDrawBitmapString("att:"+ofToString(att), ofGetWidth()-150, 75);
-        ofDrawBitmapString("med:"+ofToString(med), ofGetWidth()-75, 75);
+        ofDrawBitmapString("M:"+ofToString(meditation), ofGetWidth()-35, 15);
+        ofDrawBitmapString("A:"+ofToString(attention), ofGetWidth()-70, 15);
+
         
         if (sig > 0) {
             ofSetColor(255, 0, 30);
@@ -313,14 +319,44 @@ void testApp::draw() {
         
         cam.draw(50, ofGetHeight()-600);
     }
-        
+    
+    // Indicator Light for Signal
+    
+    if(thinkGear.getSignalQuality() == 200){
+        ofSetColor(255,0,0);
+        ofRect(0, 0, 12, 12);
+        ofSetColor(230);
+        ofDrawBitmapString(ofToString(thinkGear.getSignalQuality()) + " no signal", 13,12);
+    }else if (thinkGear.getSignalQuality() > 0 && thinkGear.getSignalQuality() < 100){
+        ofSetColor(255,255,0);
+        ofRect(0, 0, 12, 12);
+        ofSetColor(230);
+        ofDrawBitmapString(ofToString(thinkGear.getSignalQuality()) + " connecting... ", 13,12);
+    
+//        ofSetColor(230);
+//        ofDrawBitmapString("make sure sensor is placed well", 2, 20);
+//        ofSetColor(230);
+//        ofDrawBitmapString("make sure ear clip is on", 2, 30);
+    }else if (thinkGear.getSignalQuality() == 0){
+        ofSetColor(0,255,0);
+        ofRect(0, 0, 12, 12);
+        ofSetColor(230);
+        ofDrawBitmapString(ofToString(thinkGear.getSignalQuality()) + " good signal", 13,12);
+    }
+    
+    cout << "signal: " << thinkGear.getSignalQuality() << endl;
+    
+    
+    ofSetColor(0);
+    ofRect(0, ofGetWindowHeight()-50, ofGetWindowWidth(), 50);
+    
 }
 
 void testApp::keyPressed(int key) {
 	if(key == 'r') {
 		tracker.reset();
 	}
-    if(key == ' '){
+    if(key == 'v'){
         
         viewMode ++;
         

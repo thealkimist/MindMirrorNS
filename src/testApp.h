@@ -1,11 +1,11 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxCv.h"
-#include "ofxOpenCv.h"
-
+//#include "ofxCv.h"
+//#include "ofxOpenCv.h"
 #include "ofxFaceTracker.h"
 #include "demoParticle.h"
+#include "ofxThinkGear.h"
 
 class testApp : public ofBaseApp {
 public:
@@ -15,8 +15,30 @@ public:
 	void keyPressed(int key);
 	void resetParticles();
     
+    // mindwave mobile
+    ofxThinkGear thinkGear;
+    void attentionListener(float &param);
+    void meditationListener(float &param);
+    
+    float atChangeTime;
+    float meChangeTime;
+    float attention;
+    float meditation;
+    float distAw;
+    float prevAw;
+    float currAw;
+    float distMw;
+    float prevMw;
+    float currMw;
+    
+    // facetracking
 	ofVideoGrabber cam;
 	ofxFaceTracker tracker;
+//    ofTexture mirror;
+//    unsigned char *mirrorImage;
+//    
+//    int camWidth;
+//    int camHeight;
     
     particleMode currentMode;
     string currentModeStr;
@@ -36,20 +58,11 @@ public:
     //ofxCvColorImage colorImage;
     ofPixels pixels;
     
-    bool		bSendSerialMessage;			// a flag for sending serial
-    char		bytesRead[3];				// data from serial, we will be trying to read 3
-    char		bytesReadString[4];			// a string needs a null terminator, so we need 3 + 1 bytes
-    int			nBytesRead;					// how much did we read?
-    int			nTimesRead;					// how many times did we read?
-    float		readTime;					// when did we last read?
-    ofSerial	serial;
-    string message;
-    
     float sig;
     float att;
     float med;
     
-    vector <string> parsedMsg;
+//    vector <string> parsedMsg;
     float medSize;
     
     int viewMode;
@@ -57,6 +70,8 @@ public:
     float transAtt, transMed;
     float a1, a2, a3, a4, a5;
     float m1, m2, m3, m4, m5;
+    
+
 
     
     

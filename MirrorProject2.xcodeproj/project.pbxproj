@@ -113,6 +113,8 @@
 		22d82b140684245a264395b86480b0c7 /* ofxBlur.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxBlur.h; path = ../../../addons/ofxFX/src/filters/ofxBlur.h; sourceTree = SOURCE_ROOT; };
 		2316C17E1734486B00328B55 /* demoParticle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = demoParticle.cpp; sourceTree = "<group>"; };
 		2316C17F1734486B00328B55 /* demoParticle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = demoParticle.h; sourceTree = "<group>"; };
+		232CE065180E1A80003FE272 /* ThinkGear.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = ThinkGear.bundle; sourceTree = "<group>"; };
+		232CE068180E1A80003FE272 /* ofxThinkGear.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxThinkGear.h; sourceTree = "<group>"; };
 		2e411f99e3ab7154484b4f96165f5cff /* kmeans_index.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = kmeans_index.h; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv2/flann/kmeans_index.h; sourceTree = SOURCE_ROOT; };
 		30884ecd9c171ab1b1bdfc3f6449c692 /* cv.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = cv.hpp; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv/cv.hpp; sourceTree = SOURCE_ROOT; };
 		319268d200f1ba567e4ccff97a1babd8 /* cxeigen.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = cxeigen.hpp; path = ../../../addons/ofxOpenCv/libs/opencv/include/opencv/cxeigen.hpp; sourceTree = SOURCE_ROOT; };
@@ -433,6 +435,32 @@
 			name = flann;
 			sourceTree = "<group>";
 		};
+		232CE04A180E1A80003FE272 /* ofxThinkGear */ = {
+			isa = PBXGroup;
+			children = (
+				232CE063180E1A80003FE272 /* lib */,
+				232CE067180E1A80003FE272 /* src */,
+			);
+			name = ofxThinkGear;
+			path = ../../../addons/ofxThinkGear;
+			sourceTree = "<group>";
+		};
+		232CE063180E1A80003FE272 /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				232CE065180E1A80003FE272 /* ThinkGear.bundle */,
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
+		232CE067180E1A80003FE272 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				232CE068180E1A80003FE272 /* ofxThinkGear.h */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
 		2b86176fa97bfb2bee1f2f83defecbfa /* ofxFaceTracker */ = {
 			isa = PBXGroup;
 			children = (
@@ -651,6 +679,7 @@
 		BB4B014C10F69532006C3DED /* addons */ = {
 			isa = PBXGroup;
 			children = (
+				232CE04A180E1A80003FE272 /* ofxThinkGear */,
 				a0b90d3b0adb9c1716816714bf7f212b /* ofxOpenCv */,
 				6025faf6414c2ca589764d26b59a2f04 /* ofxCv */,
 				2b86176fa97bfb2bee1f2f83defecbfa /* ofxFaceTracker */,
@@ -964,6 +993,8 @@
 /* Begin PBXProject section */
 		E4B69B4C0A3A1720003C02F2 /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+			};
 			buildConfigurationList = E4B69B4D0A3A1720003C02F2 /* Build configuration list for PBXProject "MirrorProject2" */;
 			compatibilityVersion = "Xcode 2.4";
 			developmentRegion = English;
@@ -1310,6 +1341,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)Debug";
+				SDKROOT = macosx10.8;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -1396,6 +1428,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx10.8;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

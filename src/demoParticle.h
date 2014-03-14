@@ -21,14 +21,14 @@ public:
     void reset();
     void update(ofPoint centerOfFace, vector <ofPoint> attractPoints, float _scale, float _drag);
     void draw();
-    void chaos();
+    void chaos(float forceMultipler);
     
     ofPoint pos;
     ofPoint vel;
     ofPoint frc;
-    float posVal = 0;
-    float timeVal = 0;
-    float frcVar = 0;
+    float posVal;
+    float timeVal;
+    float frcVar;
     ofFloatColor color;
     
     float drag;

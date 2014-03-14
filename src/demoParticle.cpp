@@ -4,6 +4,10 @@
 demoParticle::demoParticle(){
 	attractPoints = NULL;
 	color.set(0.0);
+    
+    posVal = 0.0;
+    timeVal = 0.0;
+    frcVar = 0.0;
 }
 
 //------------------------------------------------------------------
@@ -26,23 +30,16 @@ void demoParticle::reset(){
     
 }
 
-void demoParticle::chaos(){
+void demoParticle::chaos(float forceMultipler){
     frc.x = ofSignedNoise(uniqueVal, pos.y * 0.2, ofGetElapsedTimef()*0.1);
     frc.y = ofSignedNoise(uniqueVal, pos.x * 0.2, ofGetElapsedTimef()*0.1);
-    vel += frc * 5;
+    vel += frc * forceMultipler;
 }
 
 
 //------------------------------------------------------------------
 void demoParticle::update(ofPoint centerOfFace, vector <ofPoint> attractPoints, float _scale, float _drag){
 
-    
-//	if( mode == PARTICLE_MODE_NOISE ){
-//		drag = _drag;
-//		vel.y = fabs(vel.y) * 3.0; //make the particles all be going down
-//	}else{
-//		drag = _drag - 0.001;
-//	}
     
 	if( mode == PARTICLE_MODE_NEAREST_POINTS ){
         //the unique val allows us to set properties slightly differently for each particle
@@ -79,7 +76,7 @@ void demoParticle::update(ofPoint centerOfFace, vector <ofPoint> attractPoints, 
 					vel += frc * 0.003;
 				}else{
 					//if the particles are not close to us, lets add a little bit of random movement using noise. this is where uniqueVal comes in handy.
-                    chaos();
+                    chaos(0.8);
                 
                 }
             }

@@ -40,7 +40,7 @@ void demoParticle::reset(){
 }
 
 //------------------------------------------------------------------
-void demoParticle::update(ofPoint centerOfFace, vector <ofPoint> attractPoints){
+void demoParticle::update(ofPoint centerOfFace, vector <ofPoint> attractPoints, float _scale, float _drag){
     
 	if( mode == PARTICLE_MODE_NEAREST_POINTS ){
         
